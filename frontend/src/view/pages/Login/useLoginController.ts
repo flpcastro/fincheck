@@ -1,6 +1,10 @@
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
+import { authService } from "../../../app/services/authService";
+import { SignInParams } from "../../../app/services/authService/signin";
+import toast from "react-hot-toast";
 
 const schema = z.object({
   email: z
@@ -24,13 +28,25 @@ export function useLoginController() {
     resolver: zodResolver(schema)
   });
 
-  const handleSubmit = hookFormHandleSubmit((data) => {
-    console.log('api: ', data)
+  const { mutateAsync, isPending } = useMutation({
+    mutationFn: async (data: SignInParams) => {
+      return await authService.SignIn(data)
+    },
   })
+
+  const handleSubmit = hookFormHandleSubmit(async (data) => {
+    try {
+      await mutateAsync(data);
+    } catch (error) {
+      toast.error('Credenciais inválidas!')
+    }
+  })
+
 
   return {
     handleSubmit,
     register,
-    errors
+    errors,
+    isPending
   }
 }
